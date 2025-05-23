@@ -14,7 +14,7 @@
 make CC=x86_64-linux-gnu-gcc-13  -C /usr/src/linux-headers-6.8.0-58-generic M=`pwd` modules
 ```
 ```bash
-insmod dmp
+insmod dmp.ko
 ```
 
 ### Тестирование
