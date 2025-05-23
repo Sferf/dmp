@@ -27,6 +27,7 @@ dd if=/dev/zero of=/tmp/disk1 bs=512 count=20000
 ```bash
 losetup /dev/loop6 /tmp/disk1
 ```
+
 Создание прокси:
 ```bash
 dmsetup create dmp1 --table "0 20000 dmp /dev/loop6"
@@ -36,3 +37,16 @@ dmsetup create dmp1 --table "0 20000 dmp /dev/loop6"
 dd if=/dev/zero of=/dev/mapper/dmp1 count=1 bs=4K
 ```
 Далее смотрим содержимое файла `/sys/module/dmp/stat/volumes` любой из доступных утилит.
+
+Вывод может выглядеть так:
+```log
+read:
+  reqs: 120
+  avg size: 4096
+write:
+  reqs: 1
+  avg size: 4096
+total:
+  reqs: 121
+  avg size: 4096
+```
