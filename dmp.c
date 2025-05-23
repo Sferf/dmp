@@ -18,13 +18,9 @@ static int dmp_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 {
   struct my_dmp_target *mdt;
 
-  // printk(KERN_CRIT "\n >>in function dmp_ctr \n");
 
-	if (argc == 1) {
-    // printk("argc %d", argc);
-    // printk("argv %s", argv[0]);
-	} else {
-    (KERN_CRIT "\n Invalid no.of arguments.\n");
+	if (argc != 1) {
+    printk(KERN_CRIT "\n Invalid no.of arguments.\n");
     ti->error = "Invalid argument count";
 		return -EINVAL;
   }
@@ -43,22 +39,18 @@ static int dmp_ctr(struct dm_target *ti, unsigned int argc, char **argv)
   }
   ti->private = mdt;
 
-  // printk(KERN_CRIT "\n>>out function dmp_ctr\n");                       
   return 0;
 
 free_mdt:
   kfree(mdt);
-  // printk(KERN_CRIT "\n>>out function dmp_ctr with error \n");           
   return -EINVAL;
 }
 
 static void dmp_dtr(struct dm_target *ti)
 {
   struct my_dmp_target *mdt = (struct my_dmp_target *) ti->private;
-  // printk(KERN_CRIT "\n<<in function dmp_dtr \n");        
   dm_put_device(ti, mdt->dev);
   kfree(mdt);
-  // printk(KERN_CRIT "\n>>out function dmp_dtr \n");               
 }
 
 struct dmp_stats_t {
@@ -73,22 +65,19 @@ static struct dmp_stats_t dmp_stats;
 
 static int dmp_map(struct dm_target *ti, struct bio *bio)
 {
-  // printk(KERN_CRIT "\n<<in function dmp_map \n");        
   struct my_dmp_target* mdtp = ti->private;
 
   int dir = bio_data_dir(bio);
   if (dir == READ) {
-    // printk("\n read \n");
     atomic64_inc(&dmp_stats.read_requests_count);
     atomic64_add(bio->bi_io_vec->bv_len, &dmp_stats.read_blocks_sum);
   } else {
-    // printk("\n write \n");
     atomic64_inc(&dmp_stats.write_requests_count);
     atomic64_add(bio->bi_io_vec->bv_len, &dmp_stats.write_blocks_sum);
   }
+
   bio_set_dev(bio, mdtp->dev->bdev);
 
-  // printk(KERN_CRIT "\n>>out function dmp_map \n");               
 	return DM_MAPIO_REMAPPED;
 }
 
