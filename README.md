@@ -13,3 +13,23 @@ make CC=x86_64-linux-gnu-gcc-13  -C /usr/src/linux-headers-6.8.0-58-generic M=`p
 ```bash
 insmod dmp
 ```
+
+### Тестирование
+Тестирование проводилось на аналогичной машине, что и установка.
+
+Создание тестового блочного устройства:
+```bash
+dd if=/dev/zero of=/tmp/disk1 bs=512 count=20000
+```
+```bash
+losetup /dev/loop6 /tmp/disk1
+```
+Создание прокси:
+```bash
+dmsetup create dmp1 --table "0 20000 dmp /dev/loop6"
+```
+Нагрузка драйвера:
+```bash
+dd if=/dev/zero of=/dev/mapper/dmp1 count=1 bs=4K
+```
+Далее смотрим содержимое файла `/sys/module/dmp/stat/volumes` любой из доступных утилит.
