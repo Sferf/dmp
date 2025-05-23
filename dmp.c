@@ -7,7 +7,6 @@
 #include <linux/kobject.h>
 #include <linux/sysfs.h>
 
-
 #define DM_MSG_PREFIX "dmp"
 
 struct my_dmp_target {
@@ -17,7 +16,6 @@ struct my_dmp_target {
 static int dmp_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 {
   struct my_dmp_target *mdt;
-
 
 	if (argc != 1) {
     printk(KERN_CRIT "\n Invalid no.of arguments.\n");
@@ -53,13 +51,14 @@ static void dmp_dtr(struct dm_target *ti)
   kfree(mdt);
 }
 
+// Due to the need for thread safety in map, we use atomics
+// This structure mostly used in map and volumes_show functions
 struct dmp_stats_t {
   atomic64_t read_requests_count;
   atomic64_t read_blocks_sum;
 
   atomic64_t write_requests_count;
   atomic64_t write_blocks_sum;
-
 };
 static struct dmp_stats_t dmp_stats;
 
@@ -144,22 +143,24 @@ static int __init dmp_init(void)
 { 
   int err = 0;
 
+  // Initialize all atomic fields of dmp_stats structure
   atomic64_set(&dmp_stats.read_blocks_sum, 0);
   atomic64_set(&dmp_stats.read_requests_count, 0);
   atomic64_set(&dmp_stats.write_blocks_sum, 0);
   atomic64_set(&dmp_stats.write_requests_count, 0);
 
+  // Create directory stat in sysfs
   stat_kobj = kobject_create_and_add("stat", &THIS_MODULE->mkobj.kobj);
   if (stat_kobj == NULL) {
     pr_err("dmp: can not allocate kobj for stat (%d)\n", err);
-    goto free_kobj;
-
+    return -ENOMEM;
   }
 
+  // Create volumes file inside directory stat
   err = sysfs_create_file(stat_kobj, &volumes_attr.attr);
   if (err) {
     pr_err("dmp: can not create sysfs stat group (%d)\n", err);
-    return err;
+    goto free_kobj;
   }
 
   err = dm_register_target(&(dmp_target));
